@@ -1,0 +1,8 @@
+spring:
+  ai:
+    mcp:
+      server:
+        protocol: STREAMABLE
+
+server:
+  port: ${PORT:8080}

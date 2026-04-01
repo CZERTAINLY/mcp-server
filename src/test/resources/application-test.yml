@@ -1,0 +1,13 @@
+spring:
+  main:
+    web-application-type: none
+  ai:
+    mcp:
+      server:
+        stdio: false
+
+ilm:
+  api:
+    url: http://localhost:${wiremock.server.port:8089}
+    auth:
+      method: none

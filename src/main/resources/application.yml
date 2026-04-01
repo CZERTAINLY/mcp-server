@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: ilm-mcp-server
+  ai:
+    mcp:
+      server:
+        name: ilm-mcp-server
+        version: 0.1.0
+        type: SYNC
+
+ilm:
+  api:
+    url: ${ILM_API_URL:https://localhost/api}
+    auth:
+      method: ${ILM_AUTH_METHOD:certificate}
+      ssl-bundle: ${ILM_SSL_BUNDLE:ilm-client}
+      oauth:
+        client-id: ${ILM_OAUTH_CLIENT_ID:}
+        client-secret: ${ILM_OAUTH_CLIENT_SECRET:}
+        token-url: ${ILM_OAUTH_TOKEN_URL:}
+        scope: ${ILM_OAUTH_SCOPE:}
+        audience: ${ILM_OAUTH_AUDIENCE:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
