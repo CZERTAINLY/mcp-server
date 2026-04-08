@@ -10,11 +10,11 @@ public interface InfrastructureService {
 
     String listGroups();
 
-    String listEntities();
+    String listEntities(String filters);
 
     String listCredentials();
 
     String listTokenInstances();
 
-    String listDiscoveries();
+    String listDiscoveries(String filters);
 }

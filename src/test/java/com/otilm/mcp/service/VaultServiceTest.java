@@ -1,5 +1,6 @@
 package com.otilm.mcp.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.otilm.mcp.client.IlmApiClient;
@@ -25,7 +26,7 @@ class VaultServiceTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        service = new VaultServiceImpl(apiClient);
+        service = new VaultServiceImpl(apiClient, new ObjectMapper());
     }
 
     @Test
@@ -61,7 +62,7 @@ class VaultServiceTest {
                                 }
                                 """)));
 
-        String result = service.listVaultInstances(null, null);
+        String result = service.listVaultInstances(null, null, null);
 
         assertThat(result).contains("Found 2 vault instances");
         assertThat(result).contains("HashiCorp Vault Production");
@@ -108,7 +109,7 @@ class VaultServiceTest {
                                 }
                                 """)));
 
-        String result = service.listVaultProfiles(null, null);
+        String result = service.listVaultProfiles(null, null, null);
 
         assertThat(result).contains("Found 2 vault profiles");
         assertThat(result).contains("prod-vault-profile");
@@ -132,8 +133,99 @@ class VaultServiceTest {
                                 {"message": "Internal Server Error"}
                                 """)));
 
-        String result = service.listVaultInstances(null, null);
+        String result = service.listVaultInstances(null, null, null);
 
         assertThat(result).contains("Error listing vault instances");
+    }
+
+    @Test
+    void shouldPassFiltersToVaultInstancesRequest() {
+        stubFor(post(urlEqualTo("/v1/vaults/list"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "items": [
+                                        {
+                                            "uuid": "vault-uuid-1",
+                                            "name": "filtered-vault",
+                                            "connector": {
+                                                "uuid": "conn-1",
+                                                "name": "hcv-connector"
+                                            }
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"filtered"}]
+                """;
+        String result = service.listVaultInstances(filters, 10, 1);
+
+        assertThat(result).contains("filtered-vault");
+        assertThat(result).contains("1 vault instances");
+
+        verify(postRequestedFor(urlEqualTo("/v1/vaults/list"))
+                .withRequestBody(containing("\"fieldIdentifier\":\"name\""))
+                .withRequestBody(containing("\"condition\":\"CONTAINS\""))
+                .withRequestBody(containing("\"value\":\"filtered\"")));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidVaultInstanceFiltersJson() {
+        String result = service.listVaultInstances("not valid json", null, null);
+
+        assertThat(result).contains("Invalid filters JSON");
+    }
+
+    @Test
+    void shouldPassFiltersToVaultProfilesRequest() {
+        stubFor(post(urlEqualTo("/v1/vaultProfiles/list"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "items": [
+                                        {
+                                            "uuid": "vp-uuid-1",
+                                            "name": "filtered-profile",
+                                            "vaultInstance": {
+                                                "uuid": "vault-1",
+                                                "name": "HashiCorp Vault"
+                                            },
+                                            "enabled": true
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"filtered"}]
+                """;
+        String result = service.listVaultProfiles(filters, 10, 1);
+
+        assertThat(result).contains("filtered-profile");
+        assertThat(result).contains("1 vault profiles");
+
+        verify(postRequestedFor(urlEqualTo("/v1/vaultProfiles/list"))
+                .withRequestBody(containing("\"fieldIdentifier\":\"name\""))
+                .withRequestBody(containing("\"condition\":\"CONTAINS\""))
+                .withRequestBody(containing("\"value\":\"filtered\"")));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidVaultProfileFiltersJson() {
+        String result = service.listVaultProfiles("not valid json", null, null);
+
+        assertThat(result).contains("Invalid filters JSON");
     }
 }

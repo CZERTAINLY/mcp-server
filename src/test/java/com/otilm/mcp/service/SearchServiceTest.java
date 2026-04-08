@@ -1,0 +1,123 @@
+package com.otilm.mcp.service;
+
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.otilm.mcp.client.IlmApiClient;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.client.RestClient;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@WireMockTest
+class SearchServiceTest {
+
+    private SearchService service;
+
+    @BeforeEach
+    void setup(WireMockRuntimeInfo wmInfo) {
+        RestClient restClient = RestClient.builder()
+                .baseUrl(wmInfo.getHttpBaseUrl())
+                .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .build();
+        IlmApiClient client = new IlmApiClient(restClient);
+        service = new SearchServiceImpl(client);
+    }
+
+    @Test
+    void shouldFormatSearchableFieldsForCertificates() {
+        stubFor(get(urlEqualTo("/v1/certificates/search"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [
+                                    {
+                                        "filterFieldSource": "property",
+                                        "searchFieldData": [
+                                            {
+                                                "fieldIdentifier": "commonName",
+                                                "fieldLabel": "Common Name",
+                                                "type": "string",
+                                                "conditions": ["EQUALS", "NOT_EQUALS", "CONTAINS", "STARTS_WITH", "ENDS_WITH", "EMPTY", "NOT_EMPTY"],
+                                                "multiValue": false
+                                            },
+                                            {
+                                                "fieldIdentifier": "state",
+                                                "fieldLabel": "State",
+                                                "type": "list",
+                                                "conditions": ["EQUALS", "NOT_EQUALS"],
+                                                "value": ["issued", "revoked"],
+                                                "multiValue": false
+                                            }
+                                        ]
+                                    },
+                                    {
+                                        "filterFieldSource": "meta",
+                                        "searchFieldData": [
+                                            {
+                                                "fieldIdentifier": "metaField1",
+                                                "fieldLabel": "Meta Field 1",
+                                                "type": "number",
+                                                "conditions": ["EQUALS", "GREATER", "LESSER"],
+                                                "multiValue": false
+                                            }
+                                        ]
+                                    }
+                                ]
+                                """)));
+
+        String result = service.getSearchableFields("certificates");
+
+        assertThat(result).contains("Available search fields for certificates");
+        assertThat(result).contains("PROPERTY");
+        assertThat(result).contains("commonName");
+        assertThat(result).contains("Common Name");
+        assertThat(result).contains("STRING");
+        assertThat(result).contains("CONTAINS");
+        assertThat(result).contains("state");
+        assertThat(result).contains("LIST");
+        assertThat(result).contains("issued");
+        assertThat(result).contains("revoked");
+        assertThat(result).contains("META");
+        assertThat(result).contains("metaField1");
+        assertThat(result).contains("NUMBER");
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidResourceType() {
+        String result = service.getSearchableFields("invalid");
+
+        assertThat(result).contains("Unknown resource type");
+        assertThat(result).contains("certificates");
+        assertThat(result).contains("keys");
+        assertThat(result).contains("secrets");
+    }
+
+    @Test
+    void shouldHandleApiError() {
+        stubFor(get(urlEqualTo("/v1/keys/search"))
+                .willReturn(aResponse().withStatus(500)));
+
+        String result = service.getSearchableFields("keys");
+
+        assertThat(result).contains("Error");
+    }
+
+    @Test
+    void shouldSupportAllResourceTypes() {
+        for (String resource : new String[]{"certificates", "keys", "secrets", "vaults", "vaultProfiles", "entities", "discoveries"}) {
+            stubFor(get(urlPathMatching("/v1/.*/search"))
+                    .willReturn(aResponse()
+                            .withHeader("Content-Type", "application/json")
+                            .withBody("[]")));
+
+            String result = service.getSearchableFields(resource);
+
+            assertThat(result).contains("Available search fields for " + resource);
+        }
+    }
+}

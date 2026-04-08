@@ -2,6 +2,7 @@ package com.otilm.mcp.service;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class KeyServiceTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        service = new KeyServiceImpl(apiClient);
+        service = new KeyServiceImpl(apiClient, new ObjectMapper());
     }
 
     @Test
@@ -65,7 +66,7 @@ class KeyServiceTest {
                                 }
                                 """)));
 
-        String result = service.searchKeys(null, null);
+        String result = service.searchKeys(null, null, null);
 
         assertThat(result).contains("Found 2 cryptographic keys");
         assertThat(result).contains("production-rsa-key");
@@ -127,6 +128,52 @@ class KeyServiceTest {
     }
 
     @Test
+    void shouldPassFiltersToSearchRequest() {
+        stubFor(post(urlEqualTo("/v1/keys"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "cryptographicKeys": [
+                                        {
+                                            "uuid": "key-1",
+                                            "name": "filtered-key",
+                                            "keyAlgorithm": "RSA",
+                                            "length": 2048,
+                                            "type": "Private",
+                                            "state": "active",
+                                            "enabled": true
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"filtered"}]
+                """;
+        String result = service.searchKeys(filters, 10, 1);
+
+        assertThat(result).contains("filtered-key");
+        assertThat(result).contains("1 cryptographic keys");
+
+        verify(postRequestedFor(urlEqualTo("/v1/keys"))
+                .withRequestBody(containing("\"fieldIdentifier\":\"name\""))
+                .withRequestBody(containing("\"condition\":\"CONTAINS\""))
+                .withRequestBody(containing("\"value\":\"filtered\"")));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidFiltersJson() {
+        String result = service.searchKeys("not valid json", null, null);
+
+        assertThat(result).contains("Invalid filters JSON");
+    }
+
+    @Test
     void shouldHandleApiError() {
         stubFor(post(urlEqualTo("/v1/keys"))
                 .willReturn(aResponse()
@@ -136,7 +183,7 @@ class KeyServiceTest {
                                 {"message": "Internal Server Error"}
                                 """)));
 
-        String result = service.searchKeys(null, null);
+        String result = service.searchKeys(null, null, null);
 
         assertThat(result).contains("Error searching keys");
     }

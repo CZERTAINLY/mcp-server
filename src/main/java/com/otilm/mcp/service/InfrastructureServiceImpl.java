@@ -11,6 +11,7 @@ import com.czertainly.api.model.core.credential.CredentialDto;
 import com.czertainly.api.model.core.cryptography.token.TokenInstanceDto;
 import com.czertainly.api.model.core.entity.EntityInstanceDto;
 import com.czertainly.api.model.core.raprofile.RaProfileDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +25,11 @@ public class InfrastructureServiceImpl implements InfrastructureService {
     private static final Logger logger = LoggerFactory.getLogger(InfrastructureServiceImpl.class);
 
     private final IlmApiClient ilmApiClient;
+    private final ObjectMapper objectMapper;
 
-    public InfrastructureServiceImpl(IlmApiClient ilmApiClient) {
+    public InfrastructureServiceImpl(IlmApiClient ilmApiClient, ObjectMapper objectMapper) {
         this.ilmApiClient = ilmApiClient;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -74,11 +77,14 @@ public class InfrastructureServiceImpl implements InfrastructureService {
     }
 
     @Override
-    public String listEntities() {
+    public String listEntities(String filters) {
         try {
             SearchRequestDto request = new SearchRequestDto();
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
             EntityInstanceResponseDto response = ilmApiClient.listEntities(request);
             return formatEntities(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to list entities", e);
             return "Error listing entities: " + e.getMessage();
@@ -108,11 +114,14 @@ public class InfrastructureServiceImpl implements InfrastructureService {
     }
 
     @Override
-    public String listDiscoveries() {
+    public String listDiscoveries(String filters) {
         try {
             SearchRequestDto request = new SearchRequestDto();
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
             DiscoveryResponseDto response = ilmApiClient.listDiscoveries(request);
             return formatDiscoveries(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to list discoveries", e);
             return "Error listing discoveries: " + e.getMessage();

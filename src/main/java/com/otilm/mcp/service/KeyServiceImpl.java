@@ -5,6 +5,7 @@ import com.czertainly.api.model.client.cryptography.CryptographicKeyResponseDto;
 import com.czertainly.api.model.core.cryptography.key.KeyDetailDto;
 import com.czertainly.api.model.core.cryptography.key.KeyItemDetailDto;
 import com.czertainly.api.model.core.cryptography.key.KeyItemDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,20 +17,25 @@ public class KeyServiceImpl implements KeyService {
     private static final Logger logger = LoggerFactory.getLogger(KeyServiceImpl.class);
 
     private final IlmApiClient ilmApiClient;
+    private final ObjectMapper objectMapper;
 
-    public KeyServiceImpl(IlmApiClient ilmApiClient) {
+    public KeyServiceImpl(IlmApiClient ilmApiClient, ObjectMapper objectMapper) {
         this.ilmApiClient = ilmApiClient;
+        this.objectMapper = objectMapper;
     }
 
     @Override
-    public String searchKeys(Integer itemsPerPage, Integer pageNumber) {
+    public String searchKeys(String filters, Integer itemsPerPage, Integer pageNumber) {
         try {
             SearchRequestDto request = new SearchRequestDto();
             if (itemsPerPage != null) request.setItemsPerPage(itemsPerPage);
             if (pageNumber != null) request.setPageNumber(pageNumber);
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
 
             CryptographicKeyResponseDto response = ilmApiClient.searchKeys(request);
             return formatKeyList(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to search keys", e);
             return "Error searching keys: " + e.getMessage();

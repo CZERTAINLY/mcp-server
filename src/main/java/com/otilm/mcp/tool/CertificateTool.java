@@ -19,11 +19,12 @@ public class CertificateTool {
         return certificateService.getStatistics();
     }
 
-    @Tool(name = "search_certificates", description = "Search and list certificates in the ILM platform with pagination. Returns certificate common name, UUID, serial number, status, validation status, algorithm, key size, and expiry date. Use this to browse the certificate inventory or check certificate statuses.")
+    @Tool(name = "search_certificates", description = "Search and list certificates in the ILM platform with optional filters and pagination. Use get_searchable_fields('certificates') to discover available filter fields. Returns certificate common name, UUID, serial number, status, validation status, algorithm, key size, and expiry date.")
     public String searchCertificates(
+            @ToolParam(description = "JSON array of search filters. Each filter: {\"fieldSource\":\"property\",\"fieldIdentifier\":\"<field>\",\"condition\":\"<operator>\",\"value\":\"<value>\"}. Use get_searchable_fields('certificates') to see available fields and operators.", required = false) String filters,
             @ToolParam(description = "Number of items per page (default: 10)", required = false) Integer itemsPerPage,
             @ToolParam(description = "Page number for pagination (default: 1)", required = false) Integer pageNumber) {
-        return certificateService.searchCertificates(itemsPerPage, pageNumber);
+        return certificateService.searchCertificates(filters, itemsPerPage, pageNumber);
     }
 
     @Tool(name = "get_certificate", description = "Get detailed information about a specific certificate by its UUID. Returns full certificate details including subject DN, issuer, validity period, state, validation status, key algorithm, signature algorithm, compliance status, fingerprint, RA profile, and groups. Use this when you need complete details about a particular certificate.")

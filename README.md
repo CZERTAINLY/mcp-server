@@ -8,13 +8,19 @@ Built with [Spring AI MCP](https://docs.spring.io/spring-ai/reference/api/mcp/mc
 
 ## Features
 
-- **21 read-only tools** for certificates, cryptographic keys, infrastructure, secrets, and vaults
+- **22 read-only tools** for certificates, cryptographic keys, infrastructure, secrets, and vaults
 - **Two transport modes**: HTTP (Streamable HTTP) and STDIO
 - **Three authentication methods**: client certificate, OAuth pass-through, OAuth client credentials
 - **AI-optimized responses**: formatted text output designed for LLM consumption
 - **Lightweight Docker image**: multi-stage build with custom JRE (jlink)
 
 ## Available Tools
+
+### Search
+
+| Tool                    | Description                                                                     |
+|-------------------------|---------------------------------------------------------------------------------|
+| `get_searchable_fields` | Discover available filter fields and operators for any searchable resource type |
 
 ### Certificates
 

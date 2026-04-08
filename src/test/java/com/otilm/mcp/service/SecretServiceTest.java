@@ -1,5 +1,6 @@
 package com.otilm.mcp.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.otilm.mcp.client.IlmApiClient;
@@ -25,7 +26,7 @@ class SecretServiceTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        service = new SecretServiceImpl(apiClient);
+        service = new SecretServiceImpl(apiClient, new ObjectMapper());
     }
 
     @Test
@@ -64,7 +65,7 @@ class SecretServiceTest {
                                 }
                                 """)));
 
-        String result = service.searchSecrets(null, null, null, null, null);
+        String result = service.searchSecrets(null, null, null);
 
         assertThat(result).contains("Found 2 secrets");
         assertThat(result).contains("db-password");
@@ -178,8 +179,53 @@ class SecretServiceTest {
                                 {"message": "Internal Server Error"}
                                 """)));
 
-        String result = service.searchSecrets(null, null, null, null, null);
+        String result = service.searchSecrets(null, null, null);
 
         assertThat(result).contains("Error searching secrets");
+    }
+
+    @Test
+    void shouldPassFiltersToSearchRequest() {
+        stubFor(post(urlEqualTo("/v1/secrets"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "items": [
+                                        {
+                                            "uuid": "secret-uuid-1",
+                                            "name": "filtered-secret",
+                                            "type": "basicAuth",
+                                            "state": "active",
+                                            "version": 1,
+                                            "enabled": true
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"filtered"}]
+                """;
+        String result = service.searchSecrets(filters, 10, 1);
+
+        assertThat(result).contains("filtered-secret");
+        assertThat(result).contains("1 secrets");
+
+        verify(postRequestedFor(urlEqualTo("/v1/secrets"))
+                .withRequestBody(containing("\"fieldIdentifier\":\"name\""))
+                .withRequestBody(containing("\"condition\":\"CONTAINS\""))
+                .withRequestBody(containing("\"value\":\"filtered\"")));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidFiltersJson() {
+        String result = service.searchSecrets("not valid json", null, null);
+
+        assertThat(result).contains("Invalid filters JSON");
     }
 }

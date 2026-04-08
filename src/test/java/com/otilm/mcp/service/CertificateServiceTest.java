@@ -2,6 +2,7 @@ package com.otilm.mcp.service;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class CertificateServiceTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        service = new CertificateServiceImpl(apiClient);
+        service = new CertificateServiceImpl(apiClient, new ObjectMapper());
     }
 
     @Test
@@ -112,7 +113,7 @@ class CertificateServiceTest {
                                 }
                                 """)));
 
-        String result = service.searchCertificates(null, null);
+        String result = service.searchCertificates(null, null, null);
 
         assertThat(result).contains("Found 2 certificates");
         assertThat(result).contains("web.example.com");
@@ -254,5 +255,50 @@ class CertificateServiceTest {
         String result = service.getStatistics();
 
         assertThat(result).contains("Error");
+    }
+
+    @Test
+    void shouldPassFiltersToSearchRequest() {
+        stubFor(post(urlEqualTo("/v1/certificates"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "certificates": [
+                                        {
+                                            "uuid": "cert-1",
+                                            "commonName": "example.com",
+                                            "serialNumber": "ABC123",
+                                            "state": "issued",
+                                            "publicKeyAlgorithm": "RSA",
+                                            "keySize": 2048
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"commonName","condition":"CONTAINS","value":"example.com"}]
+                """;
+        String result = service.searchCertificates(filters, 10, 1);
+
+        assertThat(result).contains("example.com");
+        assertThat(result).contains("1 certificates");
+
+        verify(postRequestedFor(urlEqualTo("/v1/certificates"))
+                .withRequestBody(containing("\"fieldIdentifier\":\"commonName\""))
+                .withRequestBody(containing("\"condition\":\"CONTAINS\""))
+                .withRequestBody(containing("\"value\":\"example.com\"")));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidFiltersJson() {
+        String result = service.searchCertificates("not valid json", null, null);
+
+        assertThat(result).contains("Invalid filters JSON");
     }
 }

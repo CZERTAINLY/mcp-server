@@ -1,5 +1,6 @@
 package com.otilm.mcp.tool;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.otilm.mcp.client.IlmApiClient;
@@ -26,7 +27,7 @@ class VaultToolTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        VaultServiceImpl service = new VaultServiceImpl(apiClient);
+        VaultServiceImpl service = new VaultServiceImpl(apiClient, new ObjectMapper());
         tool = new VaultTool(service);
     }
 
@@ -54,7 +55,7 @@ class VaultToolTest {
                                 }
                                 """)));
 
-        String result = tool.listVaultInstances(null, null);
+        String result = tool.listVaultInstances(null, null, null);
 
         assertThat(result).contains("Found 1 vault instances");
         assertThat(result).contains("HashiCorp Vault");
@@ -87,7 +88,7 @@ class VaultToolTest {
                                 }
                                 """)));
 
-        String result = tool.listVaultProfiles(null, null);
+        String result = tool.listVaultProfiles(null, null, null);
 
         assertThat(result).contains("Found 1 vault profiles");
         assertThat(result).contains("prod-profile");

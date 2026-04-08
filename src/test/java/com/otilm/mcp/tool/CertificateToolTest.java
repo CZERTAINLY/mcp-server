@@ -2,6 +2,7 @@ package com.otilm.mcp.tool;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import com.otilm.mcp.service.CertificateServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,7 @@ class CertificateToolTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        CertificateServiceImpl service = new CertificateServiceImpl(apiClient);
+        CertificateServiceImpl service = new CertificateServiceImpl(apiClient, new ObjectMapper());
         tool = new CertificateTool(service);
     }
 
@@ -80,7 +81,7 @@ class CertificateToolTest {
                                 }
                                 """)));
 
-        String result = tool.searchCertificates(10, 1);
+        String result = tool.searchCertificates(null, 10, 1);
 
         assertThat(result).contains("Found 1 certificates");
         assertThat(result).contains("test.example.com");
@@ -181,5 +182,38 @@ class CertificateToolTest {
         assertThat(result).contains("SUCCESS");
 
         verify(getRequestedFor(urlEqualTo("/v1/certificates/cert-uuid/history")));
+    }
+
+    @Test
+    void searchCertificatesWithFiltersDelegatesToService() {
+        stubFor(post(urlEqualTo("/v1/certificates"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "certificates": [
+                                        {
+                                            "uuid": "cert-1",
+                                            "commonName": "filtered.example.com",
+                                            "serialNumber": "DEF456",
+                                            "state": "issued",
+                                            "publicKeyAlgorithm": "RSA",
+                                            "keySize": 4096
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"commonName","condition":"CONTAINS","value":"filtered"}]
+                """;
+        String result = tool.searchCertificates(filters, 10, 1);
+
+        assertThat(result).contains("filtered.example.com");
+        assertThat(result).contains("1 certificates");
     }
 }

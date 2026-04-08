@@ -4,7 +4,7 @@ public interface CertificateService {
 
     String getStatistics();
 
-    String searchCertificates(Integer itemsPerPage, Integer pageNumber);
+    String searchCertificates(String filters, Integer itemsPerPage, Integer pageNumber);
 
     String getCertificate(String uuid);
 
