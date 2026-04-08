@@ -54,10 +54,10 @@ class SearchToolTest {
 
         String result = tool.getSearchableFields("certificates");
 
-        assertThat(result).contains("Available search fields for certificates");
-        assertThat(result).contains("commonName");
-        assertThat(result).contains("STRING");
-        assertThat(result).contains("EQUALS");
+        assertThat(result).contains("Available search fields for certificates")
+                .contains("commonName")
+                .contains("STRING")
+                .contains("EQUALS");
     }
 
     @Test

@@ -157,8 +157,8 @@ class KeyServiceTest {
                 """;
         String result = service.searchKeys(filters, 10, 1);
 
-        assertThat(result).contains("filtered-key");
-        assertThat(result).contains("1 cryptographic keys");
+        assertThat(result).contains("filtered-key")
+                .contains("1 cryptographic keys");
 
         verify(postRequestedFor(urlEqualTo("/v1/keys"))
                 .withRequestBody(containing("\"fieldIdentifier\":\"name\""))

@@ -213,7 +213,7 @@ class CertificateToolTest {
                 """;
         String result = tool.searchCertificates(filters, 10, 1);
 
-        assertThat(result).contains("filtered.example.com");
-        assertThat(result).contains("1 certificates");
+        assertThat(result).contains("filtered.example.com")
+                .contains("1 certificates");
     }
 }

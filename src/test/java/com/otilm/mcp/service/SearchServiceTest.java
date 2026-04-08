@@ -72,29 +72,29 @@ class SearchServiceTest {
 
         String result = service.getSearchableFields("certificates");
 
-        assertThat(result).contains("Available search fields for certificates");
-        assertThat(result).contains("PROPERTY");
-        assertThat(result).contains("commonName");
-        assertThat(result).contains("Common Name");
-        assertThat(result).contains("STRING");
-        assertThat(result).contains("CONTAINS");
-        assertThat(result).contains("state");
-        assertThat(result).contains("LIST");
-        assertThat(result).contains("issued");
-        assertThat(result).contains("revoked");
-        assertThat(result).contains("META");
-        assertThat(result).contains("metaField1");
-        assertThat(result).contains("NUMBER");
+        assertThat(result).contains("Available search fields for certificates")
+                .contains("PROPERTY")
+                .contains("commonName")
+                .contains("Common Name")
+                .contains("STRING")
+                .contains("CONTAINS")
+                .contains("state")
+                .contains("LIST")
+                .contains("issued")
+                .contains("revoked")
+                .contains("META")
+                .contains("metaField1")
+                .contains("NUMBER");
     }
 
     @Test
     void shouldReturnErrorForInvalidResourceType() {
         String result = service.getSearchableFields("invalid");
 
-        assertThat(result).contains("Unknown resource type");
-        assertThat(result).contains("certificates");
-        assertThat(result).contains("keys");
-        assertThat(result).contains("secrets");
+        assertThat(result).contains("Unknown resource type")
+                .contains("certificates")
+                .contains("keys")
+                .contains("secrets");
     }
 
     @Test

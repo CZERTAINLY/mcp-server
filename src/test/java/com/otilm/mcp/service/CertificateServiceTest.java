@@ -286,8 +286,8 @@ class CertificateServiceTest {
                 """;
         String result = service.searchCertificates(filters, 10, 1);
 
-        assertThat(result).contains("example.com");
-        assertThat(result).contains("1 certificates");
+        assertThat(result).contains("example.com")
+                .contains("1 certificates");
 
         verify(postRequestedFor(urlEqualTo("/v1/certificates"))
                 .withRequestBody(containing("\"fieldIdentifier\":\"commonName\""))

@@ -167,8 +167,8 @@ class VaultServiceTest {
                 """;
         String result = service.listVaultInstances(filters, 10, 1);
 
-        assertThat(result).contains("filtered-vault");
-        assertThat(result).contains("1 vault instances");
+        assertThat(result).contains("filtered-vault")
+                .contains("1 vault instances");
 
         verify(postRequestedFor(urlEqualTo("/v1/vaults/list"))
                 .withRequestBody(containing("\"fieldIdentifier\":\"name\""))
@@ -213,8 +213,8 @@ class VaultServiceTest {
                 """;
         String result = service.listVaultProfiles(filters, 10, 1);
 
-        assertThat(result).contains("filtered-profile");
-        assertThat(result).contains("1 vault profiles");
+        assertThat(result).contains("filtered-profile")
+                .contains("1 vault profiles");
 
         verify(postRequestedFor(urlEqualTo("/v1/vaultProfiles/list"))
                 .withRequestBody(containing("\"fieldIdentifier\":\"name\""))

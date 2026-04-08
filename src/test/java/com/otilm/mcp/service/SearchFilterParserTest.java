@@ -5,6 +5,9 @@ import com.czertainly.api.model.core.search.FilterConditionOperator;
 import com.czertainly.api.model.core.search.FilterFieldSource;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -15,21 +18,11 @@ class SearchFilterParserTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Test
-    void shouldReturnEmptyListWhenFiltersIsNull() {
-        List<SearchFilterRequestDto> result = SearchFilterParser.parseFilters(null, objectMapper);
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void shouldReturnEmptyListWhenFiltersIsBlank() {
-        List<SearchFilterRequestDto> result = SearchFilterParser.parseFilters("  ", objectMapper);
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void shouldReturnEmptyListWhenFiltersIsEmptyArray() {
-        List<SearchFilterRequestDto> result = SearchFilterParser.parseFilters("[]", objectMapper);
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"  ", "[]"})
+    void shouldReturnEmptyListForNullBlankOrEmptyInput(String input) {
+        List<SearchFilterRequestDto> result = SearchFilterParser.parseFilters(input, objectMapper);
         assertThat(result).isEmpty();
     }
 

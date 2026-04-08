@@ -66,20 +66,7 @@ public class SearchServiceImpl implements SearchService {
 
             if (group.getSearchFieldData() != null) {
                 for (SearchFieldDataDto field : group.getSearchFieldData()) {
-                    sb.append("  - ").append(field.getFieldIdentifier());
-                    sb.append(" | ").append(field.getFieldLabel());
-                    sb.append(" (").append(field.getType().name()).append(")");
-
-                    if (field.getConditions() != null && !field.getConditions().isEmpty()) {
-                        sb.append(" — Operators: ");
-                        sb.append(String.join(", ", field.getConditions().stream().map(Enum::name).toList()));
-                    }
-
-                    if (field.getValue() != null) {
-                        sb.append(" — Values: ").append(field.getValue());
-                    }
-
-                    sb.append("\n");
+                    formatField(sb, field);
                 }
             }
 
@@ -87,5 +74,22 @@ public class SearchServiceImpl implements SearchService {
         }
 
         return sb.toString();
+    }
+
+    private void formatField(StringBuilder sb, SearchFieldDataDto field) {
+        sb.append("  - ").append(field.getFieldIdentifier());
+        sb.append(" | ").append(field.getFieldLabel());
+        sb.append(" (").append(field.getType().name()).append(")");
+
+        if (field.getConditions() != null && !field.getConditions().isEmpty()) {
+            sb.append(" — Operators: ");
+            sb.append(String.join(", ", field.getConditions().stream().map(Enum::name).toList()));
+        }
+
+        if (field.getValue() != null) {
+            sb.append(" — Values: ").append(field.getValue());
+        }
+
+        sb.append("\n");
     }
 }

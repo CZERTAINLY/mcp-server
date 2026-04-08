@@ -213,8 +213,8 @@ class SecretServiceTest {
                 """;
         String result = service.searchSecrets(filters, 10, 1);
 
-        assertThat(result).contains("filtered-secret");
-        assertThat(result).contains("1 secrets");
+        assertThat(result).contains("filtered-secret")
+                .contains("1 secrets");
 
         verify(postRequestedFor(urlEqualTo("/v1/secrets"))
                 .withRequestBody(containing("\"fieldIdentifier\":\"name\""))

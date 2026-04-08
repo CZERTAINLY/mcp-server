@@ -8,7 +8,6 @@ import com.czertainly.api.model.client.dashboard.StatisticsDto;
 import com.czertainly.api.model.common.PaginationResponseDto;
 import com.czertainly.api.model.core.certificate.CertificateDetailDto;
 import com.czertainly.api.model.core.info.CoreInfoResponseDto;
-import com.czertainly.api.model.core.search.SearchFieldDataByGroupDto;
 import com.czertainly.api.model.core.secret.SecretDetailDto;
 import com.czertainly.api.model.core.secret.SecretDto;
 import com.czertainly.api.model.core.secret.SecretVersionDto;
@@ -349,8 +348,8 @@ class IlmApiClientTest {
 
         var result = client.getSearchableFields("certificates");
 
-        assertThat(result).isNotNull();
-        assertThat(result).hasSize(1);
+        assertThat(result).isNotNull()
+                .hasSize(1);
         assertThat(result.get(0).getSearchFieldData()).hasSize(2);
         assertThat(result.get(0).getSearchFieldData().get(0).getFieldIdentifier()).isEqualTo("commonName");
         assertThat(result.get(0).getSearchFieldData().get(1).getFieldIdentifier()).isEqualTo("state");
