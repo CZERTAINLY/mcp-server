@@ -2,6 +2,7 @@ package com.otilm.mcp.service;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +26,7 @@ class InfrastructureServiceTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        service = new InfrastructureServiceImpl(apiClient);
+        service = new InfrastructureServiceImpl(apiClient, new ObjectMapper());
     }
 
     @Test
@@ -208,7 +209,7 @@ class InfrastructureServiceTest {
                                 }
                                 """)));
 
-        String result = service.listDiscoveries();
+        String result = service.listDiscoveries(null);
 
         assertThat(result).contains("Discoveries (1 total");
         assertThat(result).contains("Network Scan Q1");
@@ -269,7 +270,7 @@ class InfrastructureServiceTest {
                                 }
                                 """)));
 
-        String result = service.listEntities();
+        String result = service.listEntities(null);
 
         assertThat(result).contains("Entity Instances (1 total");
         assertThat(result).contains("Web Server Entity");
@@ -277,6 +278,89 @@ class InfrastructureServiceTest {
         assertThat(result).contains("Status: connected");
         assertThat(result).contains("Connector: Entity-Connector");
         assertThat(result).contains("Kind: Keystore");
+    }
+
+    @Test
+    void shouldPassFiltersToEntities() {
+        stubFor(post(urlEqualTo("/v1/entities/list"))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldSource", equalTo("property")))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldIdentifier", equalTo("name")))
+                .withRequestBody(matchingJsonPath("$.filters[0].condition", equalTo("CONTAINS")))
+                .withRequestBody(matchingJsonPath("$.filters[0].value", equalTo("web")))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "entities": [
+                                        {
+                                            "uuid": "entity-uuid-1",
+                                            "name": "Web Server Entity",
+                                            "status": "connected"
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"web"}]
+                """;
+        String result = service.listEntities(filters);
+
+        assertThat(result).contains("Web Server Entity");
+        verify(postRequestedFor(urlEqualTo("/v1/entities/list"))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldSource", equalTo("property"))));
+    }
+
+    @Test
+    void shouldPassFiltersToDiscoveries() {
+        stubFor(post(urlEqualTo("/v1/discoveries/list"))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldSource", equalTo("property")))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldIdentifier", equalTo("name")))
+                .withRequestBody(matchingJsonPath("$.filters[0].condition", equalTo("CONTAINS")))
+                .withRequestBody(matchingJsonPath("$.filters[0].value", equalTo("scan")))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                {
+                                    "discoveries": [
+                                        {
+                                            "uuid": "disc-uuid-1",
+                                            "name": "Network Scan",
+                                            "status": "completed",
+                                            "totalCertificatesDiscovered": 10
+                                        }
+                                    ],
+                                    "itemsPerPage": 10,
+                                    "pageNumber": 1,
+                                    "totalPages": 1,
+                                    "totalItems": 1
+                                }
+                                """)));
+
+        String filters = """
+                [{"fieldSource":"property","fieldIdentifier":"name","condition":"CONTAINS","value":"scan"}]
+                """;
+        String result = service.listDiscoveries(filters);
+
+        assertThat(result).contains("Network Scan");
+        verify(postRequestedFor(urlEqualTo("/v1/discoveries/list"))
+                .withRequestBody(matchingJsonPath("$.filters[0].fieldSource", equalTo("property"))));
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidEntitiesFiltersJson() {
+        String result = service.listEntities("bad json");
+        assertThat(result).contains("Invalid filters JSON");
+    }
+
+    @Test
+    void shouldReturnErrorForInvalidDiscoveriesFiltersJson() {
+        String result = service.listDiscoveries("bad json");
+        assertThat(result).contains("Invalid filters JSON");
     }
 
     @Test

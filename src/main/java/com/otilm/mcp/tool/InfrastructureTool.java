@@ -2,6 +2,7 @@ package com.otilm.mcp.tool;
 
 import com.otilm.mcp.service.InfrastructureService;
 import org.springframework.ai.tool.annotation.Tool;
+import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -33,9 +34,10 @@ public class InfrastructureTool {
         return infrastructureService.listGroups();
     }
 
-    @Tool(name = "list_entities", description = "List all entity instances configured in the ILM platform. Returns entity name, UUID, status, connector, and kind. Use this to see which entities are registered for certificate management operations.")
-    public String listEntities() {
-        return infrastructureService.listEntities();
+    @Tool(name = "list_entities", description = "List entity instances configured in the ILM platform with optional filters. Use get_searchable_fields('entities') to discover available filter fields. Returns entity name, UUID, status, connector, and kind.")
+    public String listEntities(
+            @ToolParam(description = "JSON array of search filters. Use get_searchable_fields('entities') to see available fields and operators.", required = false) String filters) {
+        return infrastructureService.listEntities(filters);
     }
 
     @Tool(name = "list_credentials", description = "List all credentials configured in the ILM platform. Returns credential name, UUID, enabled status, kind, and connector. Use this to see which credentials are available for authentication with external systems.")
@@ -48,8 +50,9 @@ public class InfrastructureTool {
         return infrastructureService.listTokenInstances();
     }
 
-    @Tool(name = "list_discoveries", description = "List all certificate discovery tasks in the ILM platform. Returns discovery name, UUID, status, kind, connector, start/end times, and total certificates discovered. Use this to see past and ongoing certificate discovery operations and their results.")
-    public String listDiscoveries() {
-        return infrastructureService.listDiscoveries();
+    @Tool(name = "list_discoveries", description = "List certificate discovery tasks in the ILM platform with optional filters. Use get_searchable_fields('discoveries') to discover available filter fields. Returns discovery name, UUID, status, kind, connector, start/end times, and total certificates discovered.")
+    public String listDiscoveries(
+            @ToolParam(description = "JSON array of search filters. Use get_searchable_fields('discoveries') to see available fields and operators.", required = false) String filters) {
+        return infrastructureService.listDiscoveries(filters);
     }
 }

@@ -2,6 +2,7 @@ package com.otilm.mcp.tool;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import com.otilm.mcp.service.KeyServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,7 @@ class KeyToolTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        KeyServiceImpl service = new KeyServiceImpl(apiClient);
+        KeyServiceImpl service = new KeyServiceImpl(apiClient, new ObjectMapper());
         tool = new KeyTool(service);
     }
 
@@ -55,7 +56,7 @@ class KeyToolTest {
                                 }
                                 """)));
 
-        String result = tool.searchKeys(null, null);
+        String result = tool.searchKeys(null, 10, 1);
 
         assertThat(result).contains("Found 1 cryptographic keys");
         assertThat(result).contains("rsa-signing-key");

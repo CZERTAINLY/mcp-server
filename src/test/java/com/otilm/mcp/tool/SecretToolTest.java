@@ -1,5 +1,6 @@
 package com.otilm.mcp.tool;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 import com.otilm.mcp.client.IlmApiClient;
@@ -26,7 +27,7 @@ class SecretToolTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        SecretServiceImpl service = new SecretServiceImpl(apiClient);
+        SecretServiceImpl service = new SecretServiceImpl(apiClient, new ObjectMapper());
         tool = new SecretTool(service);
     }
 
@@ -54,7 +55,7 @@ class SecretToolTest {
                                 }
                                 """)));
 
-        String result = tool.searchSecrets(null, null, null, null, null);
+        String result = tool.searchSecrets(null, null, null);
 
         assertThat(result).contains("Found 1 secrets");
         assertThat(result).contains("db-password");

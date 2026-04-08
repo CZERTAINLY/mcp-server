@@ -315,4 +315,45 @@ class IlmApiClientTest {
 
         verify(postRequestedFor(urlEqualTo("/v1/vaultProfiles/list")));
     }
+
+    @Test
+    void getSearchableFields_shouldReturnFieldData() {
+        stubFor(get(urlEqualTo("/v1/certificates/search"))
+                .willReturn(aResponse()
+                        .withHeader("Content-Type", "application/json")
+                        .withBody("""
+                                [
+                                    {
+                                        "filterFieldSource": "property",
+                                        "searchFieldData": [
+                                            {
+                                                "fieldIdentifier": "commonName",
+                                                "fieldLabel": "Common Name",
+                                                "type": "string",
+                                                "conditions": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "STARTS_WITH", "ENDS_WITH", "EMPTY", "NOT_EMPTY"],
+                                                "multiValue": false
+                                            },
+                                            {
+                                                "fieldIdentifier": "state",
+                                                "fieldLabel": "State",
+                                                "type": "list",
+                                                "conditions": ["EQUALS", "NOT_EQUALS"],
+                                                "value": ["issued", "revoked", "requested"],
+                                                "multiValue": false
+                                            }
+                                        ]
+                                    }
+                                ]
+                                """)));
+
+        var result = client.getSearchableFields("certificates");
+
+        assertThat(result).isNotNull()
+                .hasSize(1);
+        assertThat(result.get(0).getSearchFieldData()).hasSize(2);
+        assertThat(result.get(0).getSearchFieldData().get(0).getFieldIdentifier()).isEqualTo("commonName");
+        assertThat(result.get(0).getSearchFieldData().get(1).getFieldIdentifier()).isEqualTo("state");
+
+        verify(getRequestedFor(urlEqualTo("/v1/certificates/search")));
+    }
 }

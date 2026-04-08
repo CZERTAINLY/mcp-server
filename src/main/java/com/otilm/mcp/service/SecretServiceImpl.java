@@ -5,6 +5,7 @@ import com.czertainly.api.model.common.PaginationResponseDto;
 import com.czertainly.api.model.core.secret.SecretDetailDto;
 import com.czertainly.api.model.core.secret.SecretDto;
 import com.czertainly.api.model.core.secret.SecretVersionDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,20 +22,25 @@ public class SecretServiceImpl implements SecretService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssXXX");
 
     private final IlmApiClient ilmApiClient;
+    private final ObjectMapper objectMapper;
 
-    public SecretServiceImpl(IlmApiClient ilmApiClient) {
+    public SecretServiceImpl(IlmApiClient ilmApiClient, ObjectMapper objectMapper) {
         this.ilmApiClient = ilmApiClient;
+        this.objectMapper = objectMapper;
     }
 
     @Override
-    public String searchSecrets(String name, String type, String state, Integer itemsPerPage, Integer pageNumber) {
+    public String searchSecrets(String filters, Integer itemsPerPage, Integer pageNumber) {
         try {
             SearchRequestDto request = new SearchRequestDto();
             if (itemsPerPage != null) request.setItemsPerPage(itemsPerPage);
             if (pageNumber != null) request.setPageNumber(pageNumber);
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
 
             PaginationResponseDto<SecretDto> response = ilmApiClient.searchSecrets(request);
             return formatSecretList(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to search secrets", e);
             return "Error searching secrets: " + e.getMessage();

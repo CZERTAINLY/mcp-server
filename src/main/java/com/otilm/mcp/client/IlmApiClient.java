@@ -19,6 +19,7 @@ import com.czertainly.api.model.core.cryptography.key.KeyDetailDto;
 import com.czertainly.api.model.core.cryptography.token.TokenInstanceDto;
 import com.czertainly.api.model.core.info.CoreInfoResponseDto;
 import com.czertainly.api.model.core.raprofile.RaProfileDto;
+import com.czertainly.api.model.core.search.SearchFieldDataByGroupDto;
 import com.czertainly.api.model.core.secret.SecretDetailDto;
 import com.czertainly.api.model.core.secret.SecretDto;
 import com.czertainly.api.model.core.secret.SecretVersionDto;
@@ -234,6 +235,16 @@ public class IlmApiClient {
         return restClient.post()
                 .uri("/v1/vaultProfiles/list")
                 .body(request)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+    }
+
+    // ---- Search field discovery ----
+
+    public List<SearchFieldDataByGroupDto> getSearchableFields(String resource) {
+        logger.debug("Fetching searchable fields for {}", resource);
+        return restClient.get()
+                .uri("/v1/{resource}/search", resource)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {});
     }

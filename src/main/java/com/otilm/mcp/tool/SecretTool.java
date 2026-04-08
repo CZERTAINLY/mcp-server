@@ -14,14 +14,12 @@ public class SecretTool {
         this.secretService = secretService;
     }
 
-    @Tool(name = "search_secrets", description = "Search and list secrets in the ILM platform with optional filtering and pagination. Returns secret name, UUID, type, state, version, enabled status, owner, vault profile, groups, and compliance status. Use this to find secrets, browse the secret inventory, or check secret statuses. Available only when connected to ILM platform 2.17 or later.")
+    @Tool(name = "search_secrets", description = "Search and list secrets in the ILM platform with optional filters and pagination. Use get_searchable_fields('secrets') to discover available filter fields. Returns secret name, UUID, type, state, version, enabled status, owner, vault profile, groups, and compliance status. Available only when connected to ILM platform 2.17 or later.")
     public String searchSecrets(
-            @ToolParam(description = "Filter by secret name", required = false) String name,
-            @ToolParam(description = "Filter by secret type (e.g., BASIC_AUTH, API_KEY, JWT_TOKEN, PRIVATE_KEY, SECRET_KEY, KEY_STORE, KEY_VALUE, GENERIC)", required = false) String type,
-            @ToolParam(description = "Filter by secret state (e.g., ACTIVE, INACTIVE, EXPIRED, REVOKED)", required = false) String state,
+            @ToolParam(description = "JSON array of search filters. Use get_searchable_fields('secrets') to see available fields and operators.", required = false) String filters,
             @ToolParam(description = "Number of items per page (default: 10)", required = false) Integer itemsPerPage,
             @ToolParam(description = "Page number for pagination (default: 1)", required = false) Integer pageNumber) {
-        return secretService.searchSecrets(name, type, state, itemsPerPage, pageNumber);
+        return secretService.searchSecrets(filters, itemsPerPage, pageNumber);
     }
 
     @Tool(name = "get_secret", description = "Get detailed information about a specific secret by its UUID. Returns full secret details including name, description, type, state, version, enabled status, owner, source vault profile, groups, compliance status, creation/update timestamps, and sync vault profiles. Use this when you need complete details about a particular secret. Does not return the actual secret content for security reasons.")

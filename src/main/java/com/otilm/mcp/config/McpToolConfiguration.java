@@ -3,6 +3,7 @@ package com.otilm.mcp.config;
 import com.otilm.mcp.tool.CertificateTool;
 import com.otilm.mcp.tool.InfrastructureTool;
 import com.otilm.mcp.tool.KeyTool;
+import com.otilm.mcp.tool.SearchTool;
 import com.otilm.mcp.tool.SecretTool;
 import com.otilm.mcp.tool.VaultTool;
 import org.slf4j.Logger;
@@ -24,10 +25,11 @@ public class McpToolConfiguration {
     public ToolCallbackProvider toolCallbackProvider(CertificateTool certificateTool,
                                                      KeyTool keyTool,
                                                      InfrastructureTool infrastructureTool,
+                                                     SearchTool searchTool,
                                                      SecretTool secretTool,
                                                      VaultTool vaultTool,
                                                      PlatformInfo platformInfo) {
-        List<Object> tools = new ArrayList<>(List.of(certificateTool, keyTool, infrastructureTool));
+        List<Object> tools = new ArrayList<>(List.of(certificateTool, keyTool, infrastructureTool, searchTool));
 
         if (platformInfo.isSecretsSupported()) {
             tools.add(secretTool);

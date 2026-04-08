@@ -2,6 +2,7 @@ package com.otilm.mcp.tool;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import com.otilm.mcp.service.InfrastructureServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,7 +27,7 @@ class InfrastructureToolTest {
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
                 .build();
         IlmApiClient apiClient = new IlmApiClient(restClient);
-        InfrastructureServiceImpl service = new InfrastructureServiceImpl(apiClient);
+        InfrastructureServiceImpl service = new InfrastructureServiceImpl(apiClient, new ObjectMapper());
         tool = new InfrastructureTool(service);
     }
 
@@ -139,7 +140,7 @@ class InfrastructureToolTest {
                                 }
                                 """)));
 
-        String result = tool.listDiscoveries();
+        String result = tool.listDiscoveries(null);
 
         assertThat(result).contains("Discoveries");
         assertThat(result).contains("Scan");
@@ -176,7 +177,7 @@ class InfrastructureToolTest {
                                 }
                                 """)));
 
-        String result = tool.listEntities();
+        String result = tool.listEntities(null);
 
         assertThat(result).contains("Entity Instances");
         assertThat(result).contains("Web Server");

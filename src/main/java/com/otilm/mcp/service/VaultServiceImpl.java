@@ -4,6 +4,7 @@ import com.czertainly.api.model.client.certificate.SearchRequestDto;
 import com.czertainly.api.model.common.PaginationResponseDto;
 import com.czertainly.api.model.core.vault.VaultInstanceDto;
 import com.czertainly.api.model.core.vaultprofile.VaultProfileDto;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.otilm.mcp.client.IlmApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,20 +16,25 @@ public class VaultServiceImpl implements VaultService {
     private static final Logger logger = LoggerFactory.getLogger(VaultServiceImpl.class);
 
     private final IlmApiClient ilmApiClient;
+    private final ObjectMapper objectMapper;
 
-    public VaultServiceImpl(IlmApiClient ilmApiClient) {
+    public VaultServiceImpl(IlmApiClient ilmApiClient, ObjectMapper objectMapper) {
         this.ilmApiClient = ilmApiClient;
+        this.objectMapper = objectMapper;
     }
 
     @Override
-    public String listVaultInstances(Integer itemsPerPage, Integer pageNumber) {
+    public String listVaultInstances(String filters, Integer itemsPerPage, Integer pageNumber) {
         try {
             SearchRequestDto request = new SearchRequestDto();
             if (itemsPerPage != null) request.setItemsPerPage(itemsPerPage);
             if (pageNumber != null) request.setPageNumber(pageNumber);
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
 
             PaginationResponseDto<VaultInstanceDto> response = ilmApiClient.listVaultInstances(request);
             return formatVaultInstanceList(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to list vault instances", e);
             return "Error listing vault instances: " + e.getMessage();
@@ -36,14 +42,17 @@ public class VaultServiceImpl implements VaultService {
     }
 
     @Override
-    public String listVaultProfiles(Integer itemsPerPage, Integer pageNumber) {
+    public String listVaultProfiles(String filters, Integer itemsPerPage, Integer pageNumber) {
         try {
             SearchRequestDto request = new SearchRequestDto();
             if (itemsPerPage != null) request.setItemsPerPage(itemsPerPage);
             if (pageNumber != null) request.setPageNumber(pageNumber);
+            request.setFilters(SearchFilterParser.parseFilters(filters, objectMapper));
 
             PaginationResponseDto<VaultProfileDto> response = ilmApiClient.listVaultProfiles(request);
             return formatVaultProfileList(response);
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
         } catch (Exception e) {
             logger.error("Failed to list vault profiles", e);
             return "Error listing vault profiles: " + e.getMessage();
